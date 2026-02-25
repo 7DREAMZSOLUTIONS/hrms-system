@@ -9,16 +9,19 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 
 require_once '../db_connect_mongo.php';
 
-$admin_user = $_SESSION['admin_user'] ?? 'Admin';
-
-// Fetch Companies (Subscriptions)
 $companies = [];
+
 try {
-    $query = new MongoDB\Driver\Query([], ['sort' => ['created_at' => -1]]);
-    $cursor = $mongoManager->executeQuery("$mongodb_name.subscription", $query);
-    $companies = $cursor->toArray();
-} catch (MongoDB\Driver\Exception\Exception $e) {
-    $error_msg = "Error fetching companies: " . $e->getMessage();
+
+    // Call Node API instead of MongoDB
+    $response = callApi('/subscription');
+
+    if (!empty($response['success']) && !empty($response['data'])) {
+        $companies = $response['data'];
+    }
+
+} catch (Exception $e) {
+    $error_msg = "API Error: " . $e->getMessage();
 }
 
 ?>
@@ -431,6 +434,7 @@ try {
                 <thead>
                     <tr>
                         <th>Company Name</th>
+                        <th>Device ID</th>
                         <th>Plan Type</th>
                         <th>Users</th>
                         <th>Amount</th>
@@ -448,17 +452,24 @@ try {
                     <?php else: ?>
                         <?php foreach ($companies as $company): ?>
                             <tr>
-                                <td>
-                                    <strong><?php echo htmlspecialchars($company->company_name ?? 'N/A'); ?></strong>
-                                    <!-- <div style="font-size:0.85rem; color:#888;">ID: <?php echo htmlspecialchars($company->company_id ?? ''); ?></div> -->
+                                <td data-label="Company Name">
+                                    <strong><?php echo htmlspecialchars($company['company_name'] ?? 'N/A'); ?></strong>
+                                    <!-- <div style="font-size:0.85rem; color:#888;">ID: <?php echo htmlspecialchars($company['company_id'] ?? ''); ?></div> -->
                                 </td>
-                                <td><?php echo htmlspecialchars($company->plan_type ?? 'Starter'); ?></td>
-                                <td><?php echo htmlspecialchars($company->num_users ?? 0); ?></td>
-                                <td>₹ <?php echo htmlspecialchars($company->subscription_amount ?? 0); ?></td>
-                                <td><?php echo htmlspecialchars($company->next_subscription_date ?? 'N/A'); ?></td>
-                                <td>
+                                <td data-label="Device ID"><span
+                                        class="font-mono text-red-500 border border-red-500/30 px-2 py-1 rounded bg-red-500/10 text-xs"><?php echo htmlspecialchars($company['deviceId'] ?? 'N/A'); ?></span>
+                                </td>
+                                <td data-label="Plan Type"><?php echo htmlspecialchars($company['plan_type'] ?? 'Starter'); ?>
+                                </td>
+                                <td data-label="Users"><?php echo htmlspecialchars($company['num_users'] ?? 0); ?></td>
+                                <td data-label="Amount">₹ <?php echo htmlspecialchars($company['subscription_amount'] ?? 0); ?>
+                                </td>
+                                <td data-label="Next Billing">
+                                    <?php echo htmlspecialchars($company['next_subscription_date'] ?? 'N/A'); ?>
+                                </td>
+                                <td data-label="Status">
                                     <?php
-                                    $status = $company->status ?? 'Inactive';
+                                    $status = $company['status'] ?? 'Inactive';
                                     $statusClass = (strtolower($status) === 'active') ? 'status-active' : 'status-inactive';
                                     ?>
                                     <span class="status-badge <?php echo $statusClass; ?>">
@@ -467,13 +478,13 @@ try {
                                 </td>
                                 <td data-label="Actions">
                                     <button class="text-gray-400 hover:text-white mr-3 transition" title="View"
-                                        onclick="viewCompany('<?php echo htmlspecialchars($company->company_id ?? ''); ?>')"><i
+                                        onclick="viewCompany('<?php echo htmlspecialchars($company['company_id'] ?? ''); ?>')"><i
                                             class="fas fa-eye"></i></button>
                                     <button class="text-gray-400 hover:text-red-500 mr-3 transition" title="Edit"
-                                        onclick="editCompany(this.closest('tr'), '<?php echo htmlspecialchars($company->company_id ?? ''); ?>')"><i
+                                        onclick="editCompany(this.closest('tr'), '<?php echo htmlspecialchars($company['company_id'] ?? ''); ?>')"><i
                                             class="fas fa-edit"></i></button>
                                     <button class="text-gray-400 hover:text-red-700 transition" title="Delete"
-                                        onclick="deleteCompany(this.closest('tr'), '<?php echo htmlspecialchars($company->company_id ?? ''); ?>')"><i
+                                        onclick="deleteCompany(this.closest('tr'), '<?php echo htmlspecialchars($company['company_id'] ?? ''); ?>')"><i
                                             class="fas fa-trash"></i></button>
                                 </td>
                             </tr>
@@ -612,10 +623,12 @@ try {
                 document.getElementById('ePhone').value = editingRow.getAttribute('data-ePhone');
                 document.getElementById('eEmail').value = editingRow.getAttribute('data-eEmail');
                 document.getElementById('eCompId').value = editingRow.getAttribute('data-eCid');
+                document.getElementById('eCompId').readOnly = true; // Make Company ID readonly during edit
                 document.querySelector('#modalOverlay h2').innerText = 'Modify_Entry_Alpha';
                 document.getElementById('nextBtn').innerText = currentStep === 3 ? "SAVE_CHANGES" : "NEXT PHASE";
             } else {
                 document.querySelector('#modalOverlay h2').innerText = 'Secure_Entry_Protocol';
+                document.getElementById('eCompId').readOnly = false; // Ensure it's editable for new companies
             }
         }
 
@@ -892,6 +905,12 @@ try {
         }
 
         function updateRow(row, data) {
+            // Preserve existing values that aren't in the form
+            // cells index: 0=Name, 1=Device, 2=Plan, 3=Users, 4=Amount, 5=Billing, 6=Status
+            const oldUsers = row.cells[3] ? row.cells[3].innerText : '0';
+            const oldAmount = row.cells[4] ? row.cells[4].innerText : '₹ 0.00';
+            const oldStatus = row.cells[6] ? row.cells[6].innerHTML : '<span class="status-badge status-active">Active</span>';
+
             // Store data in attributes for easy retrieval during edit
             row.setAttribute('data-name', data.name);
             row.setAttribute('data-gst', data.gst);
@@ -905,23 +924,15 @@ try {
             row.setAttribute('data-eCid', data.eCid);
 
             row.innerHTML = `
-                <td data-label="Organization">
-                    <div class="font-bold text-white">${data.name}</div>
-                    <div class="text-[10px] text-gray-400">GST: ${data.gst}</div>
-                    <div class="text-[8px] text-gray-600 mt-1 uppercase">${data.addr}</div>
+                <td data-label="Company Name">
+                    <strong>${data.name || 'N/A'}</strong>
                 </td>
-                <td data-label="Hardware_ID" class="font-mono text-red-600">${data.did || 'N/A'}</td>
-                <td data-label="Expiry" class="text-xs">
-                    <span class="text-gray-400">Sub:</span> ${data.sExp || 'N/A'}
-                </td>
-                <td data-label="Employee">
-                    <div class="text-sm">${data.eName}</div>
-                    <div class="text-[10px] text-gray-500">CODE: ${data.eCode}</div>
-                </td>
-                <td data-label="Contact" class="text-xs underline decoration-red-900">
-                    ${data.eEmail}<br>${data.ePhone}<br>
-                    <span class="text-[8px] text-gray-600 no-underline">CID: ${data.eCid}</span>
-                </td>
+                <td data-label="Device ID"><span class="font-mono text-red-500 border border-red-500/30 px-2 py-1 rounded bg-red-500/10 text-xs">${data.did || 'N/A'}</span></td>
+                <td data-label="Plan Type">${data.planType || 'Starter'}</td>
+                <td data-label="Users">${oldUsers}</td>
+                <td data-label="Amount">${oldAmount}</td>
+                <td data-label="Next Billing">${data.sExp || 'N/A'}</td>
+                <td data-label="Status">${oldStatus}</td>
                 <td data-label="Actions">
                     <button class="text-gray-400 hover:text-white mr-3 transition" title="View" onclick="viewCompany('${data.eCid}')"><i class="fas fa-eye"></i></button>
                     <button class="text-gray-400 hover:text-red-500 mr-3 transition" title="Edit" onclick="editCompany(this.closest('tr'), '${data.eCid}')"><i class="fas fa-edit"></i></button>

@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 
 const deviceSchema = new mongoose.Schema({
     companyId: { type: String, required: true },
+    deviceId: { type: String },
     subscriptionExpiry: String
     // Add other fields as necessary
 }, { collection: 'devices' });

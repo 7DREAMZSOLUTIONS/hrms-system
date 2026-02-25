@@ -1,48 +1,48 @@
 <?php
 session_start();
-// Check if already logged in
-if (isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true) {
+
+// Already logged in
+if (!empty($_SESSION['admin_logged_in'])) {
     header("Location: dashboard.php");
     exit;
 }
 
 $error = '';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = $_POST['username']; // Phone number
-    $password = $_POST['password'];
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? ''; // (not yet validated by API)
 
     require_once '../db_connect_mongo.php';
 
-    try {
-        $filter = ['phone' => $username];
-        $query = new MongoDB\Driver\Query($filter);
-        $cursor = $mongoManager->executeQuery("$mongodb_name.admins", $query);
-        $user = current($cursor->toArray());
+    // CALL NODE API
+    $response = callApi('/admins');
 
-        if ($user) {
-            if (isset($user->password) && password_verify($password, $user->password)) {
-                if (isset($user->role) && $user->role === 'super_admin') {
-                    // Success
-                    $_SESSION['admin_logged_in'] = true;
-                    $_SESSION['admin_user'] = $user->name ?? 'Super Admin';
-                    $_SESSION['admin_id'] = (string) $user->_id;
-                    header("Location: dashboard.php");
-                    exit;
-                } else {
-                    $error = "Access Denied: You do not have Super Admin privileges.";
-                }
-            } else {
-                $error = "Invalid password.";
+    if (!$response || empty($response['success'])) {
+        $error = "Unable to connect to authentication server.";
+    } else {
+
+        $userFound = null;
+
+        foreach ($response['data'] as $admin) {
+            if ($admin['phone'] === $username) {
+                $userFound = $admin;
+                break;
             }
-        } else {
-            $error = "User not found with this mobile number.";
         }
 
-    } catch (MongoDB\Driver\Exception\Exception $e) {
-        $error = "Database Error: " . $e->getMessage();
-    } catch (Exception $e) {
-        $error = "Error: " . $e->getMessage();
+        if ($userFound) {
+            $_SESSION['admin_logged_in'] = true;
+            $_SESSION['admin_id']   = $userFound['_id'];
+            $_SESSION['admin_phone'] = $userFound['phone'];
+            $_SESSION['admin_user']  = $userFound['fullName'] ?? 'Admin';
+
+            header("Location: dashboard.php");
+            exit;
+        } else {
+            $error = "Invalid phone number.";
+        }
     }
 }
 ?>

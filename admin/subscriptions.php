@@ -10,11 +10,9 @@ require_once '../db_connect_mongo.php';
 // Fetch Subscriptions
 $subscriptions = [];
 try {
-    // Optional: Sort by created_at desc if field exists, for now just fetch all
-    $query = new MongoDB\Driver\Query([], ['sort' => ['_id' => -1]]);
-    $cursor = $mongoManager->executeQuery("$mongodb_name.subscription", $query);
-    foreach ($cursor as $doc) {
-        $subscriptions[] = $doc;
+    $response = callApi('/subscription', 'GET');
+    if (!empty($response['success']) && !empty($response['data'])) {
+        $subscriptions = $response['data'];
     }
 } catch (Exception $e) {
     // Handle error quietly or log
@@ -384,17 +382,17 @@ try {
                         </tr>
                     <?php else: ?>
                         <?php foreach ($subscriptions as $sub):
-                            $companyName = htmlspecialchars($sub->company_name ?? 'Unknown Company');
-                            $companyId = htmlspecialchars($sub->company_id ?? 'N/A');
+                            $companyName = htmlspecialchars($sub['company_name'] ?? 'Unknown Company');
+                            $companyId = htmlspecialchars($sub['company_id'] ?? 'N/A');
 
-                            $lastPayment = $sub->last_payment_date ?? 'N/A';
-                            $nextPayment = $sub->next_subscription_date ?? 'N/A';
+                            $lastPayment = $sub['last_payment_date'] ?? 'N/A';
+                            $nextPayment = $sub['next_subscription_date'] ?? 'N/A';
 
-                            $numUsers = isset($sub->num_users) ? (int) $sub->num_users : 0;
-                            $planType = htmlspecialchars($sub->plan_type ?? 'N/A');
-                            $subAmount = isset($sub->subscription_amount) ? number_format((float) $sub->subscription_amount, 2) : '0.00';
+                            $numUsers = isset($sub['num_users']) ? (int) $sub['num_users'] : 0;
+                            $planType = htmlspecialchars($sub['plan_type'] ?? 'N/A');
+                            $subAmount = isset($sub['subscription_amount']) ? number_format((float) $sub['subscription_amount'], 2) : '0.00';
 
-                            $statusRaw = $sub->status ?? 'Unknown';
+                            $statusRaw = $sub['status'] ?? 'Unknown';
                             $statusVisual = 'status-active';
 
                             if (strtolower($statusRaw) === 'overdue') {

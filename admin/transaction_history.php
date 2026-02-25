@@ -10,10 +10,9 @@ require_once '../db_connect_mongo.php';
 // Fetch Transaction History
 $transactions = [];
 try {
-    $query = new MongoDB\Driver\Query([], ['sort' => ['_id' => -1]]);
-    $cursor = $mongoManager->executeQuery("$mongodb_name.transaction_history", $query);
-    foreach ($cursor as $doc) {
-        $transactions[] = $doc;
+    $response = callApi('/transactions', 'GET');
+    if (!empty($response['success']) && !empty($response['data'])) {
+        $transactions = $response['data'];
     }
 } catch (Exception $e) {
     // Handle error quietly or log
@@ -410,14 +409,14 @@ try {
                         </tr>
                     <?php else: ?>
                         <?php foreach ($transactions as $txn):
-                            $companyName = htmlspecialchars($txn->company_name ?? 'Unknown Company');
-                            $invoiceNum = htmlspecialchars($txn->invoice_number ?? 'N/A');
+                            $companyName = htmlspecialchars($txn['company_name'] ?? 'Unknown Company');
+                            $invoiceNum = htmlspecialchars($txn['invoice_number'] ?? 'N/A');
 
-                            $totalAmount = isset($txn->amount) ? number_format((float) $txn->amount, 2) : '0.00';
-                            $baseAmount = isset($txn->base_amount) ? number_format((float) $txn->base_amount, 2) : '0.00';
-                            $gstAmount = isset($txn->gst_amount) ? number_format((float) $txn->gst_amount, 2) : '0.00';
+                            $totalAmount = isset($txn['amount']) ? number_format((float) $txn['amount'], 2) : '0.00';
+                            $baseAmount = isset($txn['base_amount']) ? number_format((float) $txn['base_amount'], 2) : '0.00';
+                            $gstAmount = isset($txn['gst_amount']) ? number_format((float) $txn['gst_amount'], 2) : '0.00';
 
-                            $statusRaw = $txn->status ?? 'Unknown';
+                            $statusRaw = $txn['status'] ?? 'Unknown';
                             $statusVisual = 'status-paid';
 
                             if (strtolower($statusRaw) === 'pending') {

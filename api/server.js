@@ -23,6 +23,12 @@ app.use('/api/validate', require('./routes/validate'));
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/payment', require('./routes/payment'));
 
+// Admin Endpoints
+app.use('/api/companies', require('./routes/companies'));
+app.use('/api/subscription', require('./routes/subscriptions'));
+app.use('/api/employees', require('./routes/employees'));
+app.use('/api/transaction_history', require('./routes/transactions'));
+
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {

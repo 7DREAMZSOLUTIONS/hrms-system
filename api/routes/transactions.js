@@ -9,7 +9,11 @@ router.get('/', async (req, res) => {
         const { company_id } = req.query;
 
         if (!company_id) {
-            return res.json({ success: false, message: "Company ID is required" });
+            // If no company ID, fetch all transactions (for superadmin dashboard)
+            const transactions = await Transaction.find({})
+                .sort({ created_at: -1 })
+                .limit(50);
+            return res.json({ success: true, data: transactions });
         }
 
         const transactions = await Transaction.find({ companyId: company_id })

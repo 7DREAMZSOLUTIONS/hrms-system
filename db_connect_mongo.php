@@ -1,37 +1,33 @@
 <?php
 // db_connect_mongo.php
 
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
+define('API_BASE_URL', 'https://hrms-system-if2q.onrender.com/api');
 
-// ================= CONFIG ================= //
-define(
-    'MONGO_URI',
-    'mongodb+srv://7dreamzofficials_db_user:KB4aTOzZb88kKy22@hrms-website.djl5xdh.mongodb.net/hrms'
-);
+function callApi($endpoint, $method = 'GET', $data = null)
+{
+    $url = API_BASE_URL . $endpoint;
 
-$mongodb_name = "hrms";
+    $ch = curl_init($url);
 
-// TLS OPTIONS (macOS fix)
-$options = [
-    "tls" => true,
-    "tlsCAFile" => "/opt/homebrew/etc/ca-certificates/cert.pem"
-];
-
-// ================ CONNECT ================= //
-try {
-    // IMPORTANT: use same variable name everywhere
-    $mongoManager = new MongoDB\Driver\Manager(MONGO_URI, $options);
-
-    // Ping test
-    $command = new MongoDB\Driver\Command(['ping' => 1]);
-    $mongoManager->executeCommand('admin', $command);
-
-} catch (MongoDB\Driver\Exception\Exception $e) {
-    http_response_code(500);
-    echo json_encode([
-        "status" => "error",
-        "message" => "MongoDB connection failed: " . $e->getMessage()
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_CUSTOMREQUEST => $method,
+        CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_SSL_VERIFYPEER => true,
     ]);
-    exit;
+
+    if ($data) {
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+    }
+
+    $response = curl_exec($ch);
+
+    if ($response === false) {
+        curl_close($ch);
+        return null;
+    }
+
+    curl_close($ch);
+    return json_decode($response, true);
 }

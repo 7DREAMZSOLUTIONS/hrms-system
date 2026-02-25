@@ -1,8 +1,8 @@
 <?php
 session_start();
 
-// Check if logged in
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+// Check login
+if (empty($_SESSION['admin_logged_in'])) {
     header("Location: index.php");
     exit;
 }
@@ -11,7 +11,7 @@ require_once '../db_connect_mongo.php';
 
 $admin_user = $_SESSION['admin_user'] ?? 'Admin';
 
-// Fetch Real Data from Database
+// Default values
 $units = 0;
 $active = 0;
 $disabled = 0;
@@ -20,67 +20,65 @@ $revenue = 0;
 $logs = 0;
 
 try {
-    // 1. Subscriptions stats
-    $subQuery = new MongoDB\Driver\Query([]);
-    $subCursor = $mongoManager->executeQuery("$mongodb_name.subscription", $subQuery);
-    $subscriptions = $subCursor->toArray();
 
-    $yesterday = new DateTime("-1 day");
+    // 1️⃣ Get subscriptions
+    $subsResponse = callApi('/subscription');
 
-    foreach ($subscriptions as $sub) {
-        $units++;
-        $status = strtolower($sub->status ?? '');
+    if (!empty($subsResponse['success']) && !empty($subsResponse['data'])) {
 
-        // Count active
-        if ($status === 'active') {
-            $active++;
-        }
+        $subscriptions = $subsResponse['data'];
+        $yesterday = new DateTime("-1 day");
 
-        // Check if subscription has ended (next_subscription_date < yesterday)
-        if (isset($sub->next_subscription_date) && !empty($sub->next_subscription_date)) {
-            try {
-                $expDate = new DateTime($sub->next_subscription_date);
-                if ($expDate < $yesterday) {
-                    $disabled++;
-                }
-            } catch (Exception $e) {
-                // Invalid date format, ignore
+        foreach ($subscriptions as $sub) {
+
+            $units++;
+
+            $status = strtolower($sub['status'] ?? '');
+
+            if ($status === 'active') {
+                $active++;
             }
+
+            if (!empty($sub['next_subscription_date'])) {
+                try {
+                    $expDate = new DateTime($sub['next_subscription_date']);
+                    if ($expDate < $yesterday) {
+                        $disabled++;
+                    }
+                } catch (Exception $e) {}
+            }
+
+            $revenue += floatval($sub['subscription_amount'] ?? 0);
         }
-
-        $revenue += floatval($sub->subscription_amount ?? 0);
     }
 
-    // 2. Users (Employees)
-    $cmdUsers = new MongoDB\Driver\Command(["count" => "employees"]);
-    $resUsers = $mongoManager->executeCommand($mongodb_name, $cmdUsers)->toArray();
-    if (!empty($resUsers)) {
-        $users = $resUsers[0]->n;
+    // 2️⃣ Get employees count
+    $empResponse = callApi('/employees');
+    if (!empty($empResponse['success']) && !empty($empResponse['data'])) {
+        $users = count($empResponse['data']);
     }
 
-    // 3. Logs (Transactions)
-    $cmdTx = new MongoDB\Driver\Command(["count" => "transaction_history"]);
-    $resTx = $mongoManager->executeCommand($mongodb_name, $cmdTx)->toArray();
-    if (!empty($resTx)) {
-        $logs = $resTx[0]->n;
+    // 3️⃣ Get transaction logs
+    $txResponse = callApi('/transaction_history');
+    if (!empty($txResponse['success']) && !empty($txResponse['data'])) {
+        $logs = count($txResponse['data']);
     }
+
 } catch (Exception $e) {
-    // Fail silently on dashboard or log error
+    // Fail silently
 }
 
-// Format logic
+// Format helpers
 function formatCurrency($num)
 {
-    if ($num >= 100000)
-        return '₹' . round($num / 100000, 1) . 'L';
-    if ($num >= 1000)
-        return '₹' . round($num / 1000, 1) . 'K';
+    if ($num >= 100000) return '₹' . round($num / 100000, 1) . 'L';
+    if ($num >= 1000) return '₹' . round($num / 1000, 1) . 'K';
     return '₹' . number_format($num);
 }
+
 function formatCount($num)
 {
-    if ($num >= 1000)
-        return round($num / 1000, 1) . 'K';
+    if ($num >= 1000) return round($num / 1000, 1) . 'K';
     return number_format($num);
 }
 ?>

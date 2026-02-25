@@ -7,51 +7,12 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
 
 require_once '../db_connect_mongo.php';
 
-// Fetch Invoices (using transaction_history and joining companies for address/gst)
+// Fetch Invoices (using transaction_history)
 $invoices = [];
 try {
-    $pipeline = [
-        [
-            '$lookup' => [
-                'from' => 'companies',
-                'localField' => 'companyId',
-                'foreignField' => 'companyId',
-                'as' => 'companyDetails'
-            ]
-        ],
-        [
-            '$unwind' => [
-                'path' => '$companyDetails',
-                'preserveNullAndEmptyArrays' => true
-            ]
-        ],
-        [
-            '$addFields' => [
-                'company_address' => '$companyDetails.address',
-                'company_gst' => '$companyDetails.gstNumber',
-                'customer_state' => '$companyDetails.state'
-            ]
-        ],
-        [
-            '$project' => [
-                'companyDetails' => 0 // Hide joined raw array
-            ]
-        ],
-        [
-            '$sort' => ['_id' => -1]
-        ]
-    ];
-
-    $command = new MongoDB\Driver\Command([
-        'aggregate' => 'transaction_history',
-        'pipeline' => $pipeline,
-        'cursor' => new stdClass()
-    ]);
-
-    $cursor = $mongoManager->executeCommand($mongodb_name, $command);
-
-    foreach ($cursor as $doc) {
-        $invoices[] = $doc;
+    $response = callApi('/transactions', 'GET');
+    if (!empty($response['success']) && !empty($response['data'])) {
+        $invoices = $response['data'];
     }
 } catch (Exception $e) {
     // Handle error quietly or log
@@ -419,14 +380,14 @@ try {
                         </tr>
                     <?php else: ?>
                         <?php foreach ($invoices as $inv):
-                            $invoiceId = htmlspecialchars($inv->invoice_number ?? 'N/A');
-                            $companyName = htmlspecialchars($inv->company_name ?? 'Unknown Company');
-                            $companyId = htmlspecialchars($inv->companyId ?? 'N/A');
+                            $invoiceId = htmlspecialchars($inv['invoice_number'] ?? 'N/A');
+                            $companyName = htmlspecialchars($inv['company_name'] ?? 'Unknown Company');
+                            $companyId = htmlspecialchars($inv['companyId'] ?? 'N/A');
 
-                            $billingDate = $inv->payment_date ?? 'N/A';
-                            $amount = isset($inv->amount) ? number_format((float) $inv->amount, 2) : '0.00';
+                            $billingDate = $inv['payment_date'] ?? 'N/A';
+                            $amount = isset($inv['amount']) ? number_format((float) $inv['amount'], 2) : '0.00';
 
-                            $statusRaw = $inv->status ?? 'Unknown';
+                            $statusRaw = $inv['status'] ?? 'Unknown';
                             $statusVisual = 'status-paid';
 
                             if (strtolower($statusRaw) === 'pending') {
@@ -439,9 +400,9 @@ try {
 
                             $displayText = strtoupper(str_replace('Success', 'PAID', $statusRaw));
 
-                            $baseAmountNum = (float) ($inv->base_amount ?? 0);
-                            $gstAmountNum = (float) ($inv->gst_amount ?? 0);
-                            $totalAmountNum = (float) ($inv->amount ?? 0);
+                            $baseAmountNum = (float) ($inv['base_amount'] ?? 0);
+                            $gstAmountNum = (float) ($inv['gst_amount'] ?? 0);
+                            $totalAmountNum = (float) ($inv['amount'] ?? 0);
 
                             $baseAmount = number_format($baseAmountNum, 2, '.', '');
                             $gstAmount = number_format($gstAmountNum, 2, '.', '');
@@ -449,13 +410,13 @@ try {
                             $sgstAmount = number_format($gstAmountNum / 2, 2, '.', '');
                             $amount = number_format($totalAmountNum, 2, '.', '');
 
-                            $paymentId = htmlspecialchars($inv->payment_id ?? 'N/A');
-                            $planType = htmlspecialchars($inv->plan_type ?? 'Enterprise');
+                            $paymentId = htmlspecialchars($inv['payment_id'] ?? 'N/A');
+                            $planType = htmlspecialchars($inv['plan_type'] ?? 'Enterprise');
 
                             // Get these if available, otherwise default
-                            $companyAddr = htmlspecialchars($inv->company_address ?? '');
-                            $companyGst = htmlspecialchars($inv->company_gst ?? 'N/A');
-                            $customerState = htmlspecialchars($inv->customer_state ?? 'N/A');
+                            $companyAddr = htmlspecialchars($inv['company_address'] ?? '');
+                            $companyGst = htmlspecialchars($inv['company_gst'] ?? 'N/A');
+                            $customerState = htmlspecialchars($inv['customer_state'] ?? 'N/A');
                             ?>
                             <tr>
                                 <td data-label="Invoice ID" class="font-bold text-red-600 font-mono"><?php echo $invoiceId; ?>

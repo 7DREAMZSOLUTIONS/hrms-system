@@ -24,35 +24,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         require_once '../db_connect_mongo.php';
 
         try {
-            // Check if phone already exists
-            $filter = ['phone' => $phone];
-            $query = new MongoDB\Driver\Query($filter);
-            $cursor = $mongoManager->executeQuery("$mongodb_name.admins", $query);
-            $existingUser = current($cursor->toArray());
+            $requestData = [
+                'name' => $name,
+                'phone' => $phone,
+                'password' => password_hash($password, PASSWORD_DEFAULT),
+                'role' => 'super_admin'
+            ];
 
-            if ($existingUser) {
-                $error = "Super Admin with this phone number already exists.";
+            $response = callApi('/admins/register', 'POST', $requestData);
+
+            if ($response && isset($response['success']) && $response['success'] === true) {
+                $success = "Super Admin registered successfully! You can now login.";
             } else {
-                // Create New Super Admin
-                $bulk = new MongoDB\Driver\BulkWrite;
-                $doc = [
-                    'name' => $name,
-                    'phone' => $phone,
-                    'password' => password_hash($password, PASSWORD_DEFAULT),
-                    'role' => 'super_admin',
-                    'created_at' => new MongoDB\BSON\UTCDateTime()
-                ];
-                $bulk->insert($doc);
-                $result = $mongoManager->executeBulkWrite("$mongodb_name.admins", $bulk);
-
-                if ($result->getInsertedCount() > 0) {
-                    $success = "Super Admin registered successfully! You can now login.";
-                } else {
-                    $error = "Failed to register admin.";
-                }
+                $error = $response['message'] ?? "Failed to register admin. Response invalid.";
             }
-        } catch (MongoDB\Driver\Exception\Exception $e) {
-            $error = "Database Error: " . $e->getMessage();
         } catch (Exception $e) {
             $error = "Error: " . $e->getMessage();
         }
