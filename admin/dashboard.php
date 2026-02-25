@@ -1,0 +1,464 @@
+<?php
+session_start();
+
+// Check if logged in
+if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+    header("Location: index.php");
+    exit;
+}
+
+require_once '../db_connect_mongo.php';
+
+$admin_user = $_SESSION['admin_user'] ?? 'Admin';
+
+// Fetch Real Data from Database
+$units = 0;
+$active = 0;
+$disabled = 0;
+$users = 0;
+$revenue = 0;
+$logs = 0;
+
+try {
+    // 1. Subscriptions stats
+    $subQuery = new MongoDB\Driver\Query([]);
+    $subCursor = $mongoManager->executeQuery("$mongodb_name.subscription", $subQuery);
+    $subscriptions = $subCursor->toArray();
+
+    $yesterday = new DateTime("-1 day");
+
+    foreach ($subscriptions as $sub) {
+        $units++;
+        $status = strtolower($sub->status ?? '');
+
+        // Count active
+        if ($status === 'active') {
+            $active++;
+        }
+
+        // Check if subscription has ended (next_subscription_date < yesterday)
+        if (isset($sub->next_subscription_date) && !empty($sub->next_subscription_date)) {
+            try {
+                $expDate = new DateTime($sub->next_subscription_date);
+                if ($expDate < $yesterday) {
+                    $disabled++;
+                }
+            } catch (Exception $e) {
+                // Invalid date format, ignore
+            }
+        }
+
+        $revenue += floatval($sub->subscription_amount ?? 0);
+    }
+
+    // 2. Users (Employees)
+    $cmdUsers = new MongoDB\Driver\Command(["count" => "employees"]);
+    $resUsers = $mongoManager->executeCommand($mongodb_name, $cmdUsers)->toArray();
+    if (!empty($resUsers)) {
+        $users = $resUsers[0]->n;
+    }
+
+    // 3. Logs (Transactions)
+    $cmdTx = new MongoDB\Driver\Command(["count" => "transaction_history"]);
+    $resTx = $mongoManager->executeCommand($mongodb_name, $cmdTx)->toArray();
+    if (!empty($resTx)) {
+        $logs = $resTx[0]->n;
+    }
+} catch (Exception $e) {
+    // Fail silently on dashboard or log error
+}
+
+// Format logic
+function formatCurrency($num)
+{
+    if ($num >= 100000)
+        return '₹' . round($num / 100000, 1) . 'L';
+    if ($num >= 1000)
+        return '₹' . round($num / 1000, 1) . 'K';
+    return '₹' . number_format($num);
+}
+function formatCount($num)
+{
+    if ($num >= 1000)
+        return round($num / 1000, 1) . 'K';
+    return number_format($num);
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HRMS Pro | MV</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;700&display=swap');
+
+        :root {
+            --red: #FF0000;
+            --black: #0A0A0A;
+            --gray: #1F1F1F;
+        }
+
+        body {
+            background-color: var(--black);
+            font-family: 'Inter', sans-serif;
+            color: white;
+            overflow-x: hidden;
+            /* Prevent horizontal scroll */
+        }
+
+        /* Unique Vertical Command Bar */
+        .command-bar {
+            width: 80px;
+            background: var(--gray);
+            border-right: 2px solid var(--red);
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s;
+            z-index: 100;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+        }
+
+        /* Responsive Sidebar Behavior */
+        @media (min-width: 769px) {
+            .command-bar:hover {
+                width: 240px;
+            }
+
+            .command-bar:hover .nav-text {
+                opacity: 1;
+                display: inline-block;
+            }
+
+            main {
+                margin-left: 80px;
+                transition: margin-left 0.4s;
+            }
+
+            /* Space for mini sidebar */
+            .command-bar:hover~main {
+                margin-left: 240px;
+            }
+
+            .mobile-header {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .command-bar {
+                transform: translateX(-100%);
+                width: 280px;
+                box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+            }
+
+            .command-bar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-backdrop {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(4px);
+                z-index: 95;
+            }
+
+            .sidebar-backdrop.open {
+                display: block;
+            }
+
+            main {
+                margin-left: 0 !important;
+                padding: 15px !important;
+                overflow-x: hidden;
+            }
+
+            .mobile-header {
+                display: flex !important;
+                background: rgba(31, 31, 31, 0.8) !important;
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+            }
+
+            .nav-text {
+                opacity: 1 !important;
+                display: inline-block !important;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .command-bar:hover {
+                width: 240px;
+            }
+
+            .command-bar:hover .nav-text {
+                opacity: 1;
+                display: inline-block;
+            }
+
+            main {
+                margin-left: 80px;
+                transition: margin-left 0.4s;
+            }
+
+            .command-bar:hover~main {
+                margin-left: 240px;
+            }
+
+            .mobile-header {
+                display: none;
+            }
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            color: #666;
+            text-decoration: none;
+            border-left: 4px solid transparent;
+            white-space: nowrap;
+            transition: 0.3s;
+        }
+
+        .nav-item.active,
+        .nav-item:hover {
+            color: white;
+            background: rgba(255, 0, 0, 0.1);
+            border-left: 4px solid var(--red);
+        }
+
+        .nav-text {
+            opacity: 0;
+            display: none;
+            margin-left: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+        }
+
+        .mobile-header {
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(31, 31, 31, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 2px solid var(--red);
+            padding: 15px 20px;
+            z-index: 100;
+            align-items: center;
+            justify-content: space-between;
+            display: none;
+        }
+
+        /* Industrial Grid Cards */
+        .grid-card {
+            background: #111;
+            border: 1px solid #333;
+            position: relative;
+            overflow: hidden;
+            transition: 0.4s;
+        }
+
+        .grid-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: var(--red);
+            transform: scaleX(0);
+            transition: 0.4s;
+        }
+
+        .grid-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .grid-card:hover {
+            border-color: #444;
+            background: #161616;
+            transform: translateY(-5px);
+        }
+
+        .glitch {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: white;
+        }
+
+        /* Mobile Toggle Switch */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 101;
+            background: var(--red);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .mobile-toggle {
+                display: flex;
+            }
+        }
+
+        /* Entrance Animation */
+        @keyframes reveal {
+            from {
+                opacity: 0;
+                clip-path: inset(0 100% 0 0);
+            }
+
+            to {
+                opacity: 1;
+                clip-path: inset(0 0 0 0);
+            }
+        }
+
+        .animate-reveal {
+            animation: reveal 0.8s ease forwards;
+        }
+    </style>
+</head>
+
+<body class="flex flex-col md:flex-row">
+
+    <?php require_once "slidebar.php"; ?>
+
+    <main
+        class="flex-1 p-4 md:p-8 overflow-y-auto bg-[radial-gradient(circle_at_top_right,_#1a1a1a_0%,_#0a0a0a_100%)] min-h-screen">
+
+        <header
+            class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 md:mb-12 animate-reveal">
+            <div class="mb-4 md:mb-0">
+                <h1 class="glitch text-2xl md:text-4xl">SUPER_ADMIN <span class="text-red-600">.V1</span></h1>
+                <p class="text-gray-500 text-[10px] tracking-[3px] mt-2 uppercase">SYSTEM ACCESS: GRANTED : USER:
+                    <?php echo htmlspecialchars($_SESSION['admin_user'] ?? 'ADMIN'); ?>
+                </p>
+            </div>
+            <div class="flex items-center gap-4 w-full md:w-auto justify-between">
+                <div class="text-right hidden sm:block">
+                    <p class="text-[10px] text-gray-500 uppercase font-bold">System Load</p>
+                    <div class="w-24 h-1 bg-gray-800 mt-1">
+                        <div class="w-2/3 h-full bg-red-600"></div>
+                    </div>
+                </div>
+                <div
+                    class="bg-red-600/10 border border-red-600 p-2 text-red-600 font-bold px-4 text-xs tracking-widest">
+                    7HRMS_PRO
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+            <div class="grid-card p-4 md:p-6 animate-reveal" style="animation-delay: 0.1s">
+                <p class="text-[9px] text-red-600 font-bold tracking-widest uppercase">Units</p>
+                <h2 class="text-2xl font-black mt-1"><?= number_format($units) ?></h2>
+            </div>
+            <div class="grid-card p-4 md:p-6 animate-reveal" style="animation-delay: 0.2s">
+                <p class="text-[9px] text-gray-500 font-bold tracking-widest uppercase">Active</p>
+                <h2 class="text-2xl font-black mt-1 text-white"><?= number_format($active) ?></h2>
+            </div>
+            <div class="grid-card p-4 md:p-6 animate-reveal" style="animation-delay: 0.3s">
+                <p class="text-[9px] text-gray-500 font-bold tracking-widest uppercase">Sub Expired</p>
+                <h2 class="text-2xl font-black mt-1 text-red-900"><?= number_format($disabled) ?></h2>
+            </div>
+            <div class="grid-card p-4 md:p-6 animate-reveal" style="animation-delay: 0.4s">
+                <p class="text-[9px] text-gray-500 font-bold tracking-widest uppercase">Users</p>
+                <h2 class="text-2xl font-black mt-1"><?= formatCount($users) ?></h2>
+            </div>
+            <div class="grid-card p-4 md:p-6 animate-reveal" style="animation-delay: 0.5s">
+                <p class="text-[9px] text-red-600 font-bold tracking-widest uppercase">Revenue</p>
+                <h2 class="text-2xl font-black mt-1"><?= formatCurrency($revenue) ?></h2>
+            </div>
+            <div class="grid-card p-4 md:p-6 animate-reveal" style="animation-delay: 0.6s">
+                <p class="text-[9px] text-gray-500 font-bold tracking-widest uppercase">Transaction Logs</p>
+                <h2 class="text-2xl font-black mt-1"><?= formatCount($logs) ?></h2>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-1 grid-card p-6 md:p-8 animate-reveal" style="animation-delay: 0.7s">
+                <h3 class="text-[10px] font-bold mb-8 border-l-2 border-red-600 pl-4 uppercase">Sub_Distribution</h3>
+                <div class="h-60"><canvas id="mvDoughnut"></canvas></div>
+            </div>
+            <div class="lg:col-span-2 grid-card p-6 md:p-8 animate-reveal" style="animation-delay: 0.8s">
+                <h3 class="text-[10px] font-bold mb-8 border-l-2 border-red-600 pl-4 uppercase">Regional_Growth</h3>
+                <div class="h-60"><canvas id="mvBar"></canvas></div>
+            </div>
+        </div>
+
+        <div class="mt-6 grid-card p-6 md:p-8 animate-reveal" style="animation-delay: 0.9s">
+            <h3 class="text-[10px] font-bold mb-8 border-l-2 border-red-600 pl-4 uppercase">Revenue_Stream</h3>
+            <div class="h-72"><canvas id="mvLine"></canvas></div>
+        </div>
+    </main>
+
+    <script>
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('backdrop').classList.toggle('open');
+        }
+
+        const red = '#FF0000';
+        Chart.defaults.color = '#555';
+        Chart.defaults.font.size = 10;
+
+        new Chart(document.getElementById('mvDoughnut'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Active', 'Inactive', 'Alert'],
+                datasets: [{ data: [<?= $active ?>, <?= $disabled ?>, 0], backgroundColor: [red, '#1a1a1a', '#444'], borderColor: '#000', borderWidth: 4 }]
+            },
+            options: { cutout: '80%', maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+
+        new Chart(document.getElementById('mvBar'), {
+            type: 'bar',
+            data: {
+                labels: ['Units', 'Active', 'Users', 'Logs'],
+                datasets: [{ label: 'System Data', data: [<?= $units ?>, <?= $active ?>, <?= $users ?>, <?= $logs ?>], backgroundColor: red }]
+            },
+            options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: '#222' } }, x: { grid: { display: false } } } }
+        });
+
+        new Chart(document.getElementById('mvLine'), {
+            type: 'line',
+            data: {
+                labels: ['01', '02', '03', '04', '05'],
+                datasets: [{
+                    label: 'Flow',
+                    data: [3000, 7000, 4000, 10000, 15000],
+                    borderColor: red,
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: true,
+                    backgroundColor: 'rgba(255, 0, 0, 0.05)',
+                    tension: 0.4
+                }]
+            },
+            options: { maintainAspectRatio: false, scales: { y: { grid: { color: '#222' } }, x: { grid: { color: '#222' } } } }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tax Invoice</title>
+
+    <style>
+        @page {
+            margin: 20px;
+        }
+
+        body {
+            font-family: 'Helvetica', Arial, sans-serif;
+            margin: 0;
+            font-size: 13px;
+            color: #333;
+            line-height: 1.4;
+            page-break-after: avoid;
+            page-break-before: avoid;
+            page-break-inside: avoid;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            page-break-inside: avoid !important;
+        }
+
+        .header-table td {
+            vertical-align: top;
+        }
+
+        .logo-img {
+            height: 50px;
+            vertical-align: middle;
+        }
+
+        .invoice-title {
+            text-align: right;
+            color: #e63946;
+        }
+
+        .invoice-title h1 {
+            margin: 0;
+            font-size: 22px;
+            text-transform: uppercase;
+        }
+
+        .invoice-title p {
+            margin: 2px 0;
+            font-weight: bold;
+        }
+
+        .address-table {
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
+        .address-box h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #e63946;
+            margin: 0 0 5px 0;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            width: 90%;
+        }
+
+        .address-box p {
+            margin: 2px 0;
+            font-size: 12px;
+        }
+
+        .items-table th {
+            background-color: #ffebee;
+            color: #e63946;
+            padding: 8px;
+            text-align: left;
+            border-bottom: 2px solid #e63946;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+
+        .items-table td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 12px;
+        }
+
+        .col-right {
+            text-align: right;
+        }
+
+        .col-center {
+            text-align: center;
+        }
+
+        .totals-table {
+            width: 40%;
+            margin-left: auto;
+            margin-top: 10px;
+        }
+
+        .totals-table td {
+            padding: 4px 8px;
+            text-align: right;
+            font-size: 12px;
+        }
+
+        .totals-table .label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .totals-table .amount {
+            font-weight: bold;
+        }
+
+        .grand-total {
+            background-color: #ffebee;
+            color: #e63946;
+            font-size: 14px;
+            border-top: 2px solid #e63946;
+        }
+
+        .account-details {
+            margin-top: 12px;
+            border-top: 1px solid #eee;
+            padding-top: 8px;
+            font-size: 11px;
+            color: #666;
+            page-break-inside: avoid !important;
+        }
+
+        .account-details h3 {
+            margin: 0 0 6px 0;
+            font-size: 12px;
+            color: #e63946;
+        }
+
+        .account-details p {
+            margin: 2px 0;
+        }
+
+        .account-details ul {
+            margin: 4px 0 0 16px;
+            padding: 0;
+            font-size: 11px;
+        }
+
+        .account-details ul li {
+            margin-bottom: 4px;
+        }
+
+        .footer {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 10px;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 6px;
+            page-break-inside: avoid !important;
+        }
+    </style>
+</head>
+
+<body>
+
+    <table class="header-table">
+        <tr>
+            <td width="50%">
+                <img src="img/logo_white.png" class="logo-img" alt="Logo">
+            </td>
+            <td width="50%" class="invoice-title">
+                <h1>Tax Invoice</h1>
+                <p>Invoice No : {{invoice_number}}</p>
+                <p>Invoice Date : {{date}}</p>
+            </td>
+        </tr>
+    </table>
+
+    <table class="address-table">
+        <tr>
+            <td width="50%" class="address-box">
+                <h3>Billed To</h3>
+                <p><strong>{{company_name}}</strong></p>
+                <p>GSTIN : {{company_gst}}</p>
+                <p>Address : {{company_address}}</p>
+                <p>State : {{customer_state}}</p>
+            </td>
+
+            <td width="50%" class="address-box">
+                <h3>Billed From</h3>
+                <p><strong>7DREAMZ</strong></p>
+                <p>GSTIN : 33MRPPS9195G1Z0</p>
+                <p>Place of Supply : Tamil Nadu (33)</p>
+                <p>Madurai, Tamil Nadu, India</p>
+                <p>Phone : +91-7397639193</p>
+                <p>Email : support@7hrms.in</p>
+            </td>
+        </tr>
+    </table>
+
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th width="35%">Description</th>
+                <th width="15%" class="col-center">HSN / SAC</th>
+                <th width="10%" class="col-center">Qty</th>
+                <th width="15%" class="col-right">Price</th>
+                <th width="25%" class="col-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <strong>HRMS Pro Subscription</strong><br>
+                    <small>{{plan_type}}</small>
+                </td>
+                <td class="col-center">998314</td>
+                <td class="col-center">1</td>
+                <td class="col-right">₹{{base_amount}}</td>
+                <td class="col-right">₹{{base_amount}}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <table class="totals-table">
+        <tr>
+            <td class="label">Sub Total</td>
+            <td class="amount">₹{{base_amount}}</td>
+        </tr>
+        <tr>
+            <td class="label">CGST (9%)</td>
+            <td class="amount">₹{{cgst_amount}}</td>
+        </tr>
+        <tr>
+            <td class="label">SGST (9%)</td>
+            <td class="amount">₹{{sgst_amount}}</td>
+        </tr>
+        <tr class="grand-total">
+            <td class="label">Grand Total</td>
+            <td class="amount">₹{{total_amount}}</td>
+        </tr>
+    </table>
+
+    <table style="width:100%;margin-top:8px;">
+        <tr>
+            <td style="font-size:12px;">
+                <strong>Amount in Words :</strong> {{amount_in_words}}
+            </td>
+        </tr>
+    </table>
+
+    <div class="account-details">
+        <h3>Bank Details</h3>
+        <p><strong>Account Name :</strong> 7DREAMZ</p>
+        <p><strong>Bank :</strong> HDFC Bank</p>
+        <p><strong>Account No :</strong> 123456789012</p>
+        <p><strong>IFSC :</strong> HDFC0001234</p>
+    </div>
+
+    <div class="account-details">
+        <h3>Service & Payment Information</h3>
+        <p><strong>Service Name :</strong> HRMS Pro – Attendance & Payroll System</p>
+        <p><strong>Service Period :</strong> 1 Year</p>
+        <p><strong>Payment Mode :</strong> Online Payment(Razorpay)</p>
+        <p><strong>Transaction Amount :</strong> ₹{{total_amount}}</p>
+
+    </div>
+
+    <div class="account-details">
+        <h3>Terms & Conditions</h3>
+        <ul>
+            <li>All services provided by 7DREAMZ are non-refundable after activation.</li>
+            <li>This invoice is issued for SaaS and IT services only.</li>
+            <li>Customization, data migration and additional development will be charged separately.</li>
+            <li>GST is charged as per applicable Government of India rules.</li>
+            <li>Non-payment or delayed payment may lead to suspension of service.</li>
+            <li>This is a system generated invoice and does not require signature.</li>
+        </ul>
+    </div>
+
+
+    <div class="footer">
+        <p>Thank you for your business!</p>
+        <p>This is a computer-generated invoice.</p>
+    </div>
+
+</body>
+
+</html>

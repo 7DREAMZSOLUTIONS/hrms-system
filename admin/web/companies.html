@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Company Management | HRMS Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&family=Inter:wght@300;700&display=swap');
+
+        :root {
+            --red: #FF0000;
+            --black: #0A0A0A;
+            --gray: #1F1F1F;
+        }
+
+        body {
+            background-color: var(--black);
+            font-family: 'Inter', sans-serif;
+            color: white;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .glitch {
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 2px;
+        }
+
+        /* Sidebar Structure */
+        .command-bar {
+            width: 80px;
+            background: var(--gray);
+            border-right: 2px solid var(--red);
+            transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s;
+            z-index: 100;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+        }
+
+        @media (max-width: 768px) {
+            .command-bar {
+                transform: translateX(-100%);
+                width: 280px;
+                box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
+            }
+
+            .command-bar.open {
+                transform: translateX(0);
+            }
+
+            .sidebar-backdrop {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.7);
+                backdrop-filter: blur(4px);
+                z-index: 95;
+            }
+
+            .sidebar-backdrop.open {
+                display: block;
+            }
+
+            main {
+                margin-left: 0 !important;
+                padding: 15px !important;
+                overflow-x: hidden;
+            }
+
+            .mobile-header {
+                display: flex !important;
+                background: rgba(31, 31, 31, 0.8) !important;
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+            }
+
+            .nav-text {
+                opacity: 1 !important;
+                display: inline-block !important;
+            }
+
+            h1.glitch {
+                font-size: 20px !important;
+                letter-spacing: 1px !important;
+            }
+
+            p.text-gray-600 {
+                letter-spacing: 2px !important;
+                font-size: 8px !important;
+            }
+        }
+
+        @media (min-width: 769px) {
+            .command-bar:hover {
+                width: 240px;
+            }
+
+            .command-bar:hover .nav-text {
+                opacity: 1;
+                display: inline-block;
+            }
+
+            main {
+                margin-left: 80px;
+                transition: margin-left 0.4s;
+            }
+
+            .command-bar:hover~main {
+                margin-left: 240px;
+            }
+
+            .mobile-header {
+                display: none;
+            }
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            color: #666;
+            text-decoration: none;
+            border-left: 4px solid transparent;
+            white-space: nowrap;
+            transition: 0.3s;
+        }
+
+        .nav-item.active,
+        .nav-item:hover {
+            color: white;
+            background: rgba(255, 0, 0, 0.1);
+            border-left: 4px solid var(--red);
+        }
+
+        .nav-text {
+            opacity: 0;
+            display: none;
+            margin-left: 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+        }
+
+        .mobile-header {
+            position: sticky;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(31, 31, 31, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 2px solid var(--red);
+            padding: 15px 20px;
+            z-index: 100;
+            align-items: center;
+            justify-content: space-between;
+            display: none;
+        }
+
+        /* Table Design */
+        .industrial-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 10px;
+        }
+
+        .industrial-table thead tr {
+            color: var(--red);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .industrial-table tr {
+            background: #111;
+            transition: 0.3s;
+        }
+
+        .industrial-table td,
+        .industrial-table th {
+            padding: 20px;
+            text-align: left;
+        }
+
+        .industrial-table td {
+            border-top: 1px solid #222;
+            border-bottom: 1px solid #222;
+        }
+
+        .industrial-table tr:hover {
+            background: #161616;
+            border-left: 4px solid var(--red);
+        }
+
+        @media (max-width: 768px) {
+
+            .industrial-table,
+            .industrial-table thead,
+            .industrial-table tbody,
+            .industrial-table th,
+            .industrial-table td,
+            .industrial-table tr {
+                display: block;
+            }
+
+            .industrial-table thead {
+                display: none;
+            }
+
+            .industrial-table tr {
+                background: linear-gradient(145deg, #111, #0a0a0a);
+                margin-bottom: 25px;
+                padding: 20px;
+                border: 1px solid #222;
+                border-left: 3px solid var(--red);
+                border-radius: 4px;
+                box-shadow: inset 0 0 15px rgba(255, 0, 0, 0.05);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .industrial-table tr::after {
+                content: "";
+                position: absolute;
+                top: 0;
+                right: 0;
+                width: 40px;
+                height: 40px;
+                background: linear-gradient(45deg, transparent 50%, rgba(255, 0, 0, 0.1) 50%);
+            }
+
+            .industrial-table td {
+                display: flex;
+                flex-direction: column;
+                align-items: flex-start;
+                padding: 12px 0;
+                border: none !important;
+                width: 100%;
+                text-align: left;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+            }
+
+            .industrial-table td>div,
+            .industrial-table td>span {
+                max-width: 100%;
+                word-wrap: break-word;
+                margin-top: 4px;
+            }
+
+            .industrial-table td:last-child {
+                border-bottom: none !important;
+                margin-top: 10px;
+                padding-top: 20px;
+                flex-direction: row;
+                justify-content: center;
+                gap: 20px;
+            }
+
+            .industrial-table td::before {
+                content: attr(data-label);
+                flex-shrink: 0;
+                font-family: 'Orbitron', sans-serif;
+                font-size: 8px;
+                color: var(--red);
+                font-weight: 900;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                margin-bottom: 2px;
+            }
+        }
+
+        /* Modal Overlay */
+        #modalOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-box {
+            background: #111;
+            border: 1px solid #333;
+            width: 100%;
+            max-width: 650px;
+            border-top: 4px solid var(--red);
+            animation: slideUp 0.4s ease;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 768px) {
+            .modal-box {
+                max-width: 100% !important;
+                height: 100% !important;
+                max-height: 100vh !important;
+                margin: 0 !important;
+                border: none !important;
+                border-top: 4px solid var(--red) !important;
+                border-radius: 0 !important;
+            }
+
+            #modalOverlay {
+                padding: 0 !important;
+            }
+
+            .step-content {
+                padding-bottom: 100px;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-bar {
+            flex: 1;
+            height: 3px;
+            background: #333;
+            transition: 0.4s;
+        }
+
+        .step-bar.active {
+            background: var(--red);
+            box-shadow: 0 0 10px var(--red);
+        }
+
+        input,
+        textarea,
+        select {
+            background: #0A0A0A !important;
+            border: 1px solid #333 !important;
+            color: white !important;
+            padding: 12px !important;
+            width: 100%;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus,
+        textarea:focus {
+            border-color: var(--red) !important;
+            box-shadow: 0 0 8px rgba(255, 0, 0, 0.2);
+        }
+
+        .btn-action {
+            background: var(--red);
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            padding: 12px 25px;
+            font-size: 11px;
+            font-weight: bold;
+            transition: 0.3s;
+            letter-spacing: 1px;
+        }
+
+        .btn-action:hover {
+            background: #cc0000;
+            box-shadow: 0 0 15px var(--red);
+        }
+
+        .btn-secondary {
+            color: #666;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 10px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+
+<body class="flex flex-col md:flex-row">
+
+    <div id="backdrop" class="sidebar-backdrop" onclick="toggleSidebar()"></div>
+
+    <header class="mobile-header">
+        <div class="glitch text-lg font-black uppercase tracking-tighter">MV_<span class="text-red-600">PRO</span></div>
+        <button onclick="toggleSidebar()" class="text-white text-xl p-2"><i class="fas fa-bars"></i></button>
+    </header>
+
+    <aside id="sidebar" class="command-bar flex flex-col">
+        <div class="h-20 flex items-center justify-center border-b border-gray-800">
+            <div class="w-10 h-10 bg-red-600 flex items-center justify-center font-black">MV</div>
+        </div>
+        <nav class="mt-4 flex-1">
+            <a href="dashboard.html" class="nav-item"><i class="fas fa-th-large"></i><span
+                    class="nav-text">DASHBOARD</span></a>
+            <a href="companies.html" class="nav-item active"><i class="fas fa-industry"></i><span
+                    class="nav-text">COMPANIES</span></a>
+            <a href="subscriptions.html" class="nav-item"><i class="fas fa-bolt"></i><span
+                    class="nav-text">SUBSCRIPTION</span></a>
+            <a href="history.html" class="nav-item"><i class="fas fa-history"></i><span class="nav-text">TRANS.
+                    HISTORY</span></a>
+            <a href="invoices.html" class="nav-item"><i class="fas fa-file-invoice-dollar"></i><span
+                    class="nav-text">INVOICE</span></a>
+        </nav>
+        <div class="p-6 border-t border-gray-800 text-center">
+            <a href="login.html" class="nav-item"><i class="fas fa-power-off"></i><span
+                    class="nav-text">LOGOUT</span></a>
+        </div>
+    </aside>
+
+    <main class="flex-1 p-6 md:p-12">
+        <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-12">
+            <div>
+                <h1 class="glitch text-3xl font-black italic uppercase">Company_Management</h1>
+                <p class="text-gray-600 text-[10px] tracking-[4px] mt-1">SECURE_DATABASE // ACCESS_MV</p>
+            </div>
+            <button onclick="openModal()" class="btn-action mt-6 md:mt-0 w-full md:w-auto">
+                <i class="fas fa-plus mr-2"></i> ADD NEW COMPANY
+            </button>
+        </header>
+
+        <div class="overflow-x-auto">
+            <table class="industrial-table">
+                <thead>
+                    <tr>
+                        <th>Organization_Info</th>
+                        <th>Hardware_ID</th>
+                        <th>Licence_Expiry</th>
+                        <th>Lead_Employee</th>
+                        <th>Contact_Data</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="companyTableBody">
+                    <tr data-name="MemoPets Store" data-gst="22AAAAA0000A1Z5" data-addr="Main Street, City"
+                        data-did="DEV-X9901" data-sExp="2026-12-31" data-dExp="2028-12-31" data-eName="MV Admin"
+                        data-eCode="EMP001" data-ePhone="+91 9876543210" data-eEmail="admin@mvpro.co" data-eCid="CID001"
+                        data-eCnum="PN001">
+                        <td data-label="Organization">
+                            <div class="font-bold text-white">MemoPets Store</div>
+                            <div class="text-[10px] text-gray-400">GST: 22AAAAA0000A1Z5</div>
+                        </td>
+                        <td data-label="Hardware_ID" class="font-mono text-red-600">DEV-X9901</td>
+                        <td data-label="Expiry" class="text-xs">
+                            <span class="text-gray-400">Sub:</span> 2026-12-31<br>
+                            <span class="text-gray-600 text-[9px]">Dev: 2028-12-31</span>
+                        </td>
+                        <td data-label="Employee">
+                            <div class="text-sm">MV Admin</div>
+                            <div class="text-[10px] text-gray-500">CODE: EMP001</div>
+                        </td>
+                        <td data-label="Contact" class="text-xs underline decoration-red-900">
+                            admin@mvpro.co<br>+91 9876543210
+                        </td>
+                        <td data-label="Actions">
+                            <button class="text-gray-600 hover:text-red-600 mr-4 transition"
+                                onclick="openModal(this.closest('tr'))"><i class="fas fa-edit"></i></button>
+                            <button class="text-gray-600 hover:text-white transition"
+                                onclick="this.closest('tr').remove()"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <div id="modalOverlay">
+        <div class="modal-box shadow-2xl rounded-sm">
+            <div class="p-6 flex justify-between items-center border-b border-gray-800">
+                <h2 class="glitch text-sm text-red-600 uppercase">Secure_Entry_Protocol</h2>
+                <button onclick="closeModal()" class="text-gray-600 hover:text-white transition"><i
+                        class="fas fa-times"></i></button>
+            </div>
+
+            <div class="p-8">
+                <div class="flex gap-2 mb-10">
+                    <div id="bar1" class="step-bar active"></div>
+                    <div id="bar2" class="step-bar"></div>
+                    <div id="bar3" class="step-bar"></div>
+                </div>
+
+                <form id="companyForm">
+                    <div id="step1" class="step-content space-y-5">
+                        <label
+                            class="text-[9px] text-gray-600 font-black uppercase tracking-widest block mb-1">01_ORGANIZATION_IDENTITY</label>
+                        <input type="text" id="cName" placeholder="COMPANY NAME" required>
+                        <input type="text" id="cGst" placeholder="GST NUMBER" required>
+                        <textarea id="cAddr" placeholder="FULL OPERATIONAL ADDRESS" rows="3"></textarea>
+                    </div>
+
+                    <div id="step2" class="step-content space-y-5 hidden">
+                        <label
+                            class="text-[9px] text-gray-600 font-black uppercase tracking-widest block mb-1">02_HARDWARE_SUBSCRIPTION</label>
+                        <input type="text" id="dId" placeholder="UNIQUE DEVICE ID (SERIAL)">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-[9px] text-gray-500 mb-2 block uppercase">Sub. Expiry Date</label>
+                                <input type="date" id="dSubExp">
+                            </div>
+                            <div>
+                                <label class="text-[9px] text-gray-500 mb-2 block uppercase">Dev. Expiry Date</label>
+                                <input type="date" id="dDevExp">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="step3" class="step-content space-y-5 hidden">
+                        <label
+                            class="text-[9px] text-gray-600 font-black uppercase tracking-widest block mb-1">03_PERSONNEL_AUTHENTICATION</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <input type="text" id="eName" placeholder="EMPLOYEE NAME">
+                            <input type="text" id="eCode" placeholder="EMPLOYEE CODE">
+                            <input type="tel" id="ePhone" placeholder="MOBILE NUMBER">
+                            <input type="email" id="eEmail" placeholder="ENTERPRISE EMAIL">
+                            <input type="text" id="eCompId" placeholder="COMPANY ID">
+                            <input type="text" id="eCompNum" placeholder="COMPANY NUMBER">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center mt-12">
+                        <button type="button" id="prevBtn" onclick="moveStep(-1)"
+                            class="btn-secondary hidden uppercase px-2 hover:text-white transition">Back</button>
+                        <button type="button" id="nextBtn" onclick="moveStep(1)" class="btn-action ml-auto">NEXT
+                            PHASE</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        let editingRow = null;
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('backdrop').classList.toggle('open');
+        }
+
+        function openModal(row = null) {
+            editingRow = row;
+            document.getElementById('modalOverlay').style.display = 'flex';
+
+            if (editingRow) {
+                // Populate form with existing data
+                const cells = editingRow.cells;
+                document.getElementById('cName').value = editingRow.getAttribute('data-name');
+                document.getElementById('cGst').value = editingRow.getAttribute('data-gst');
+                document.getElementById('cAddr').value = editingRow.getAttribute('data-addr');
+                document.getElementById('dId').value = editingRow.getAttribute('data-did');
+                document.getElementById('dSubExp').value = editingRow.getAttribute('data-sExp');
+                document.getElementById('dDevExp').value = editingRow.getAttribute('data-dExp');
+                document.getElementById('eName').value = editingRow.getAttribute('data-eName');
+                document.getElementById('eCode').value = editingRow.getAttribute('data-eCode');
+                document.getElementById('ePhone').value = editingRow.getAttribute('data-ePhone');
+                document.getElementById('eEmail').value = editingRow.getAttribute('data-eEmail');
+                document.getElementById('eCompId').value = editingRow.getAttribute('data-eCid');
+                document.getElementById('eCompNum').value = editingRow.getAttribute('data-eCnum');
+                document.querySelector('#modalOverlay h2').innerText = 'Modify_Entry_Alpha';
+                document.getElementById('nextBtn').innerText = currentStep === 3 ? "SAVE_CHANGES" : "NEXT PHASE";
+            } else {
+                document.querySelector('#modalOverlay h2').innerText = 'Secure_Entry_Protocol';
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').style.display = 'none';
+            resetForm();
+        }
+
+        function resetForm() {
+            currentStep = 1;
+            editingRow = null;
+            document.getElementById('companyForm').reset();
+            const contents = document.querySelectorAll('.step-content');
+            const bars = document.querySelectorAll('.step-bar');
+            contents.forEach((c, i) => c.classList.toggle('hidden', i !== 0));
+            bars.forEach((b, i) => b.classList.toggle('active', i === 0));
+            document.getElementById('prevBtn').classList.add('hidden');
+            document.getElementById('nextBtn').innerText = "NEXT PHASE";
+        }
+
+        function moveStep(n) {
+            const contents = document.querySelectorAll('.step-content');
+            const bars = document.querySelectorAll('.step-bar');
+
+            if (n > 0) {
+                const currentInputs = contents[currentStep - 1].querySelectorAll('[required]');
+                for (let input of currentInputs) {
+                    if (!input.value.trim()) {
+                        alert("PROTOCOL ERROR: MISSING_REQUIRED_FIELDS");
+                        return;
+                    }
+                }
+            }
+
+            contents[currentStep - 1].classList.add('hidden');
+            currentStep += n;
+
+            if (currentStep > 3) {
+                commitData();
+                return;
+            }
+
+            contents[currentStep - 1].classList.remove('hidden');
+            document.getElementById('prevBtn').classList.toggle('hidden', currentStep === 1);
+            document.getElementById('nextBtn').innerText = currentStep === 3 ? (editingRow ? "SAVE_CHANGES" : "COMMIT_DATA") : "NEXT PHASE";
+            bars.forEach((b, i) => b.classList.toggle('active', i < currentStep));
+        }
+
+        function commitData() {
+            const data = {
+                name: document.getElementById('cName').value,
+                gst: document.getElementById('cGst').value,
+                addr: document.getElementById('cAddr').value,
+                did: document.getElementById('dId').value,
+                sExp: document.getElementById('dSubExp').value,
+                dExp: document.getElementById('dDevExp').value,
+                eName: document.getElementById('eName').value,
+                eCode: document.getElementById('eCode').value,
+                ePhone: document.getElementById('ePhone').value,
+                eEmail: document.getElementById('eEmail').value,
+                eCid: document.getElementById('eCompId').value,
+                eCnum: document.getElementById('eCompNum').value
+            };
+
+            if (editingRow) {
+                updateRow(editingRow, data);
+                alert("SYSTEM_MESSAGE: DATA_MODIFIED_SUCCESSFULLY");
+            } else {
+                const table = document.getElementById('companyTableBody');
+                const row = document.createElement('tr');
+                updateRow(row, data);
+                table.appendChild(row);
+                alert("SYSTEM_MESSAGE: DATA_SECURED_SUCCESSFULLY");
+            }
+            closeModal();
+        }
+
+        function updateRow(row, data) {
+            // Store data in attributes for easy retrieval during edit
+            row.setAttribute('data-name', data.name);
+            row.setAttribute('data-gst', data.gst);
+            row.setAttribute('data-addr', data.addr);
+            row.setAttribute('data-did', data.did);
+            row.setAttribute('data-sExp', data.sExp);
+            row.setAttribute('data-dExp', data.dExp);
+            row.setAttribute('data-eName', data.eName);
+            row.setAttribute('data-eCode', data.eCode);
+            row.setAttribute('data-ePhone', data.ePhone);
+            row.setAttribute('data-eEmail', data.eEmail);
+            row.setAttribute('data-eCid', data.eCid);
+            row.setAttribute('data-eCnum', data.eCnum);
+
+            row.innerHTML = `
+                <td data-label="Organization">
+                    <div class="font-bold text-white">${data.name}</div>
+                    <div class="text-[10px] text-gray-400">GST: ${data.gst}</div>
+                    <div class="text-[8px] text-gray-600 mt-1 uppercase">${data.addr}</div>
+                </td>
+                <td data-label="Hardware_ID" class="font-mono text-red-600">${data.did || 'N/A'}</td>
+                <td data-label="Expiry" class="text-xs">
+                    <span class="text-gray-400">Sub:</span> ${data.sExp || 'N/A'}<br>
+                    <span class="text-gray-600 text-[9px]">Dev: ${data.dExp || 'N/A'}</span>
+                </td>
+                <td data-label="Employee">
+                    <div class="text-sm">${data.eName}</div>
+                    <div class="text-[10px] text-gray-500">CODE: ${data.eCode}</div>
+                </td>
+                <td data-label="Contact" class="text-xs underline decoration-red-900">
+                    ${data.eEmail}<br>${data.ePhone}<br>
+                    <span class="text-[8px] text-gray-600 no-underline">CID: ${data.eCid} | P#: ${data.eCnum}</span>
+                </td>
+                <td data-label="Actions">
+                    <button class="text-gray-600 hover:text-red-600 mr-4 transition" onclick="openModal(this.closest('tr'))"><i class="fas fa-edit"></i></button>
+                    <button class="text-gray-600 hover:text-white transition" onclick="this.closest('tr').remove()"><i class="fas fa-trash"></i></button>
+                </td>
+            `;
+        }
+    </script>
+</body>
+
+</html>

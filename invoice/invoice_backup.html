@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Tax Invoice</title>
+    <style>
+        @page {
+            margin: 0px 0px 0px 0px;
+            /* Reset default margins */
+        }
+
+        body {
+            font-family: 'Helvetica', Arial, sans-serif;
+            margin: 40px;
+            /* Content padding */
+            font-size: 14px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            /* margin-bottom: 20px; */
+        }
+
+        /* Header Layout */
+        .header-table td {
+            vertical-align: top;
+        }
+
+        .logo-img {
+            height: 60px;
+            vertical-align: middle;
+        }
+
+        .invoice-title {
+            text-align: right;
+            color: #e63946;
+        }
+
+        .invoice-title h1 {
+            margin: 0;
+            font-size: 24px;
+            text-transform: uppercase;
+        }
+
+        .invoice-title p {
+            margin: 2px 0;
+            font-weight: bold;
+        }
+
+        /* Address Layout */
+        .address-table {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+
+        .address-box h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #e63946;
+            margin: 0 0 5px 0;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 5px;
+            width: 80%;
+        }
+
+        .address-box p {
+            margin: 2px 0;
+            font-size: 13px;
+        }
+
+        /* Items Table */
+        .items-table th {
+            background-color: #ffebee;
+            /* Light red */
+            color: #e63946;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #e63946;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+
+        .items-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .col-right {
+            text-align: right;
+        }
+
+        .col-center {
+            text-align: center;
+        }
+
+        /* Totals */
+        .totals-table {
+            width: 40%;
+            margin-left: auto;
+            /* Push to right */
+            margin-top: 20px;
+        }
+
+        .totals-table td {
+            padding: 5px 10px;
+            text-align: right;
+        }
+
+        .totals-table .label {
+            font-weight: bold;
+            color: #555;
+        }
+
+        .totals-table .amount {
+            font-weight: bold;
+        }
+
+        .grand-total {
+            background-color: #ffebee;
+            color: #e63946;
+            font-size: 16px;
+            border-top: 2px solid #e63946;
+        }
+
+        /* Footer/Account */
+        .account-details {
+            margin-top: 40px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .account-details h3 {
+            margin: 0 0 10px 0;
+            font-size: 13px;
+            color: #e63946;
+        }
+
+        .footer {
+            margin-top: 50px;
+            text-align: center;
+            font-size: 11px;
+            color: #999;
+            border-top: 1px solid #eee;
+            padding-top: 10px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Header -->
+    <table class="header-table">
+        <tr>
+            <td width="50%">
+                <img src="img/logo_white.png" class="logo-img" alt="Logo">
+            </td>
+            <td width="50%" class="invoice-title">
+                <h1>Tax Invoice</h1>
+                <p>Invoice #: {{invoice_number}}</p>
+                <p>Date: {{date}}</p>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Addresses -->
+    <table class="address-table">
+        <tr>
+            <td width="50%" class="address-box">
+                <h3>Billed To</h3>
+                <p><strong>{{company_name}}</strong></p>
+                <p>GSTIN: {{company_gst}}</p>
+                <p>{{company_address}}</p>
+            </td>
+            <td width="50%" class="address-box">
+                <h3>Billed From</h3>
+                <p><strong>7 DREAMZ Solutions</strong></p>
+                <p>GSTIN: 33BBBBB1111B1Z5</p>
+                <p>Madurai, Tamil Nadu, India</p>
+                <p>Email: support@7dreamz.com</p>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Line Items -->
+    <table class="items-table">
+        <thead>
+            <tr>
+                <th width="50%">Description</th>
+                <th width="15%" class="col-center">Qty</th>
+                <th width="15%" class="col-right">Price</th>
+                <th width="20%" class="col-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>
+                    <strong>HRMS Pro Subscription</strong><br>
+                    <small>{{plan_type}}</small>
+                </td>
+                <td class="col-center">1</td>
+                <td class="col-right">₹{{base_amount}}</td>
+                <td class="col-right">₹{{base_amount}}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Totals -->
+    <table class="totals-table">
+        <tr>
+            <td class="label">Sub Total</td>
+            <td class="amount">₹{{base_amount}}</td>
+        </tr>
+        <tr>
+            <td class="label">CGST (9%)</td>
+            <td class="amount">₹{{cgst_amount}}</td>
+        </tr>
+        <tr>
+            <td class="label">SGST (9%)</td>
+            <td class="amount">₹{{sgst_amount}}</td>
+        </tr>
+        <tr class="grand-total">
+            <td class="label">Grand Total</td>
+            <td class="amount">₹{{total_amount}}</td>
+        </tr>
+    </table>
+
+    <!-- Account Details -->
+    <div class="account-details">
+        <h3>Bank Details</h3>
+        <p><strong>Account Name:</strong> 7 DREAMZ Solutions</p>
+        <p><strong>Bank:</strong> HDFC Bank</p>
+        <p><strong>Account No:</strong> 123456789012</p>
+        <p><strong>IFSC:</strong> HDFC0001234</p>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <p>Thank you for your business!</p>
+        <p>This is a computer-generated invoice.</p>
+    </div>
+
+</body>
+
+</html>

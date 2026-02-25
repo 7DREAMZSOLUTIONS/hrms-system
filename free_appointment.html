@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book a Demo | HRMS PRO - 7 DREAMZ</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap');
+
+        :root {
+            --red: #e63946;
+            --black: #050505;
+            --gray: #111111;
+            --border: rgba(255, 255, 255, 0.08);
+            --glass: rgba(255, 255, 255, 0.05);
+            --text-muted: #888888;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--black);
+            color: white;
+            overflow-x: hidden;
+        }
+
+        /* --- NAVIGATION --- */
+        header {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 1100px;
+            background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 900;
+        }
+
+        .logo span {
+            color: var(--red);
+        }
+
+        .btn-nav {
+            background: var(--red);
+            color: white;
+            padding: 8px 22px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: 0.3s;
+        }
+
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+            align-items: center;
+        }
+
+        nav ul li a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: white;
+        }
+
+        .hamburger {
+            display: none;
+            cursor: pointer;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 2px;
+            background: white;
+        }
+
+        /* --- APPOINTMENT HERO --- */
+        .appointment-hero {
+            padding: 160px 10% 60px;
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            gap: 80px;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .booking-info h1 {
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 900;
+            line-height: 1;
+            margin-bottom: 25px;
+        }
+
+        .booking-info h1 span {
+            color: var(--red);
+        }
+
+        .booking-info p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 40px;
+        }
+
+        /* --- GLASS FORM --- */
+        .booking-form {
+            background: var(--gray);
+            padding: 50px;
+            border-radius: 40px;
+            border: 1px solid var(--border);
+            position: relative;
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 15px;
+            color: white;
+            font-family: 'Outfit', sans-serif;
+            font-size: 1rem;
+            transition: 0.3s;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--red);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 18px;
+            background: var(--red);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 20px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(230, 57, 70, 0.4);
+        }
+
+        /* --- MOBILE MENU --- */
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            height: 100vh;
+            background: var(--black);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            transition: 0.5s;
+            z-index: 999;
+        }
+
+        .mobile-menu.active {
+            right: 0;
+        }
+
+        .mobile-menu a {
+            font-size: 1.5rem;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        /* --- RESPONSIVENESS --- */
+        @media (max-width: 968px) {
+            .appointment-hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+                padding-top: 140px;
+            }
+
+            .booking-info p {
+                margin-bottom: 20px;
+            }
+
+            .booking-form {
+                padding: 30px 20px;
+            }
+
+            nav ul {
+                display: none;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">HRMS<span>.PRO</span></div>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="free_appointment.html">Free Appointment</a></li>
+                <li><a href="help.html">help</a></li>
+                <li><a href="recharge.html">Pay Now</a></li>
+            </ul>
+        </nav>
+        <a href="#" class="btn-nav">Login</a>
+        <div class="hamburger" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </header>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <div style="position:absolute; top:40px; right:40px; font-size:2rem; cursor:pointer;" onclick="toggleMenu()">
+            &times;</div>
+        <a href="index.html" onclick="toggleMenu()">Home</a>
+        <a href="about.html" onclick="toggleMenu()">About</a>
+        <a href="free_appointment.html" onclick="toggleMenu()">Free Appointment</a>
+        <a href="help.html" onclick="toggleMenu()">help</a>
+        <a href="recharge.html" onclick="toggleMenu()">Pay Now</a>
+    </div>
+
+    <section class="appointment-hero">
+        <div class="booking-info">
+            <span style="color: var(--red); font-weight: 700; letter-spacing: 2px; font-size: 0.8rem;">RESERVE A
+                SLOT</span>
+            <h1>Experience the <span>Hardware</span> Edge.</h1>
+            <p>Ready to see how our custom-built sensors and cloud software work together? Book a free 15-minute demo
+                with a 7 DREAMZ specialist.</p>
+
+            <!-- Phone -->
+            <div style="display: flex; gap: 20px; align-items: center; margin-top: 40px;">
+                <div
+                    style="width: 50px; height: 50px; background: var(--glass); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--red);">
+                    📞</div>
+                <div>
+                    <h4 style="font-size: 0.9rem; color: #666;">SUPPORT HOTLINE</h4>
+                    <p style="font-weight: 600;">+91 73976 39193</p>
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div style="display: flex; gap: 20px; align-items: center; margin-top: 25px;">
+                <div
+                    style="width: 50px; height: 50px; background: var(--glass); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--red);">
+                    📧</div>
+                <div>
+                    <h4 style="font-size: 0.9rem; color: #666;">EMAIL</h4>
+                    <p style="font-weight: 600;">admin@7hrms.in</p>
+                </div>
+            </div>
+
+            <!-- Address -->
+            <div style="display: flex; gap: 20px; align-items: flex-start; margin-top: 25px;">
+                <div
+                    style="width: 50px; height: 50px; background: var(--glass); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--red); flex-shrink: 0;">
+                    📍</div>
+                <div>
+                    <h4 style="font-size: 0.9rem; color: #666;">HEADQUARTERS</h4>
+                    <p style="font-weight: 600; font-size: 0.95rem; line-height: 1.5;">
+                        Yagappa Nagar, Anna Nagar,<br>
+                        Vandiyur, Madurai,<br>
+                        Tamil Nadu 625020
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="booking-form">
+            <form id="appointmentForm" onsubmit="submitAppointment(event)">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" name="full_name" placeholder="e.g. MV Solutions" required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="form-group">
+                        <label>Business Email</label>
+                        <input type="email" name="email" placeholder="name@company.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Phone Number</label>
+                        <input type="tel" name="phone" placeholder="+91..." required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Company Size</label>
+                    <select name="company_size" required>
+                        <option value="" disabled selected>Select size</option>
+                        <option value="1-10">1-10 Employees</option>
+                        <option value="11-50">11-50 Employees (Growth)</option>
+                        <option value="51-100">51-100 Employees</option>
+                        <option value="100+">100+ Employees (Enterprise)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Message / Hardware Requirements</label>
+                    <textarea name="message" rows="4" placeholder="How can we help your business?"></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit">Confirm Free Appointment</button>
+            </form>
+        </div>
+    </section>
+
+    <footer style="padding: 40px; text-align: center; border-top: 1px solid var(--border);">
+        <p style="color: #444; font-size: 0.8rem;">&copy; 2026 HRMS PRO | 7 DREAMZ Solutions</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            document.getElementById('mobileMenu').classList.toggle('active');
+        }
+
+        async function submitAppointment(event) {
+            event.preventDefault();
+            const form = document.getElementById('appointmentForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('book_appointment.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Appointment booked successfully!');
+                    form.reset();
+                } else {
+                    alert('Error: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            }
+        }
+    </script>
+</body>
+
+</html>

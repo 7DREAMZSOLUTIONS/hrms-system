@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Lookup | 7 DREAMZ</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;900&display=swap');
+
+        :root {
+            --red: #e63946;
+            --black: #050505;
+            --gray: #111111;
+            --border: rgba(255, 255, 255, 0.08);
+            --text-muted: #888888;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: var(--black);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 40px;
+        }
+
+        h1 span {
+            color: var(--red);
+        }
+
+        /* --- LOOKUP BOX (Jio Style) --- */
+        .lookup-card {
+            background: var(--gray);
+            padding: 40px;
+            border-radius: 40px;
+            border: 1px solid var(--border);
+            box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+        }
+
+        .input-group {
+            display: flex;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 5px;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+
+        .input-group:focus-within {
+            border-color: var(--red);
+        }
+
+        .prefix {
+            padding: 15px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        input {
+            background: transparent;
+            border: none;
+            color: white;
+            padding: 15px;
+            font-size: 1.1rem;
+            width: 100%;
+            outline: none;
+        }
+
+        .btn-proceed {
+            width: 100%;
+            padding: 18px;
+            background: var(--red);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-proceed:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 30px rgba(230, 57, 70, 0.3);
+        }
+
+        /* --- RESULTS SECTION --- */
+        .result-panel {
+            margin-top: 30px;
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .employee-card {
+            background: linear-gradient(135deg, #1a1a1a, #0a0a0a);
+            border: 1px solid var(--border);
+            border-radius: 25px;
+            padding: 25px;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .employee-card::after {
+            content: '7D';
+            position: absolute;
+            right: -10px;
+            top: -10px;
+            font-size: 5rem;
+            font-weight: 900;
+            opacity: 0.03;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .status-active {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+        }
+
+        .status-error {
+            background: rgba(230, 57, 70, 0.2);
+            color: var(--red);
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .detail-row span:first-child {
+            color: var(--text-muted);
+        }
+
+        .btn-outline {
+            display: inline-block;
+            margin-top: 15px;
+            color: var(--red);
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        /* --- NAVIGATION --- */
+        header {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 1100px;
+            background: rgba(10, 10, 10, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: 100px;
+            padding: 12px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+        }
+
+        .logo span {
+            color: var(--red);
+        }
+
+        /* Desktop Menu Control */
+        nav ul {
+            display: flex;
+            list-style: none;
+            gap: 25px;
+            align-items: center;
+        }
+
+        nav ul li a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        nav ul li a:hover {
+            color: white;
+        }
+
+        .btn-nav {
+            background: var(--red);
+            color: white;
+            padding: 8px 22px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: 0.3s;
+        }
+
+        /* Hamburger - Hidden on Desktop */
+        .hamburger {
+            display: none;
+            cursor: pointer;
+            flex-direction: column;
+            gap: 5px;
+            z-index: 1100;
+        }
+
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 2px;
+            background: white;
+            transition: 0.3s;
+        }
+
+        /* Mobile Nav Panel - Hidden on Desktop */
+        .mobile-nav {
+            display: none;
+        }
+
+        /* --- 📱 MOBILE VIEW OPTIMIZATIONS --- */
+        @media (max-width: 968px) {
+            header {
+                padding: 10px 25px;
+                border-radius: 50px;
+            }
+
+            nav ul {
+                display: none;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .mobile-nav {
+                display: flex;
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 100%;
+                height: 100vh;
+                background: var(--black);
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 30px;
+                transition: 0.5s;
+                z-index: 1050;
+            }
+
+            .mobile-nav.active {
+                right: 0;
+            }
+
+            .mobile-nav a {
+                font-size: 1.5rem;
+                color: white;
+                text-decoration: none;
+                font-weight: 600;
+            }
+
+            .close-menu {
+                position: absolute;
+                top: 20px;
+                right: 30px;
+                font-size: 2.5rem;
+                cursor: pointer;
+                color: white;
+            }
+        }
+    </style>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">HRMS<span>.PRO</span></div>
+        <nav>
+            <ul id="desktop-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="free_appointment.html">Free Appointment</a></li>
+                <li><a href="help.html">Help</a></li>
+                <li><a href="recharge.html">Pay Now</a></li>
+            </ul>
+        </nav>
+        <a href="#" class="btn-nav">Login</a>
+        <div class="hamburger" onclick="toggleMobileNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </header>
+
+    <div class="mobile-nav" id="mobile-nav">
+        <div class="close-menu" onclick="toggleMobileNav()">&times;</div>
+        <a href="index.html" onclick="toggleMobileNav()">Home</a>
+        <a href="about.html" onclick="toggleMobileNav()">About</a>
+        <a href="free_appointment.html" onclick="toggleMobileNav()">Free Appointment</a>
+        <a href="help.html" onclick="toggleMobileNav()">Help</a>
+        <a href="recharge.html" onclick="toggleMobileNav()">Pay Now</a>
+    </div>
+
+    <div class="container" style="margin-top: 100px;">
+        <h1>Recharge <span>7HRMS PRO</span></h1>
+
+        <div class="lookup-card">
+            <div class="input-group">
+                <span class="prefix">+91</span>
+                <input type="tel" id="empNumber" placeholder="Enter Mobile Number" maxlength="10" list="adminNumbers">
+                <datalist id="adminNumbers"></datalist>
+            </div>
+            <button class="btn-proceed" onclick="lookupEmployee()">Proceed</button>
+        </div>
+
+        <div id="resultPanel" class="result-panel">
+            <div id="successCard" style="display: none;">
+                <div class="employee-card">
+                    <div class="status-badge" id="resStatusBadge">MEMBER EXIST</div>
+                    <div class="detail-row"><span>S.No</span><span id="resSno"></span></div>
+                    <div class="detail-row"><span>Company Name</span><span id="resComp"></span></div>
+                    <div class="detail-row"><span>Mobile Number</span><span id="resMobile"></span></div>
+                    <div class="detail-row"><span>Email</span><span id="resEmail"></span></div>
+                    <div class="detail-row"><span>Employees</span><input type="number" id="resEmpCount"
+                            oninput="calculateAmount(this.value)"
+                            style="width: 80px; background: rgba(255,255,255,0.1); border: 1px solid var(--border); color: white; border-radius: 5px; padding: 2px 5px; text-align: right;">
+                    </div>
+                    <div class="detail-row"><span>Plan Type</span><span id="resPlan"></span></div>
+
+                    <div class="detail-row"><span>Next Subscription</span><span id="resNextDate"></span></div>
+                    <div class="detail-row"><span>Last Payment</span><span id="resLastDate"></span></div>
+                    <div class="detail-row"><span>Status</span><span id="resStatus"></span></div>
+
+                    <div style="margin-top: 20px; text-align: left;">
+                        <label
+                            style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 5px; display: block;">Total
+                            Amount (₹)</label>
+                        <input type="text" id="resAmountInput" readonly
+                            style="background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 10px; padding: 12px; font-weight: 700; color: white; width: 100%;">
+                        <div id="resBreakdown"
+                            style="color: var(--text-muted); font-size: 0.8rem; margin-top: 5px; font-style: italic;">
+                        </div>
+                    </div>
+
+                    <button class="btn-proceed" style="margin-top: 15px; padding: 12px;" onclick="startPayment()">Pay
+                        Now</button>
+                </div>
+            </div>
+
+            <div id="errorCard" style="display: none;">
+                <div class="employee-card" style="border-color: var(--red); text-align: center;">
+                    <div class="status-badge status-error">NOT FOUND</div>
+                    <p style="margin-bottom: 10px;">This number is not registered in our system.</p>
+                    <button class="btn-proceed" onclick="location.href='register.html'">Register Now</button>
+                    <br>
+                    <span class="btn-outline" onclick="resetLookup()">Try another number</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction History Section -->
+    <div id="transactionHistoryPanel" style="margin-top: -265px; display: none; text-align: left; margin-left: 70px;">
+        <h3 style="margin-bottom: 20px;">Transaction <span style="color: var(--red);">History</span></h3>
+        <div style="overflow-x: auto;">
+            <table
+                style="width: 100%; border-collapse: collapse; background: var(--gray); border-radius: 15px; overflow: hidden; font-size: 0.9rem;">
+                <thead>
+                    <tr style="background: rgba(255,255,255,0.05); color: var(--text-muted);">
+                        <th style="padding: 15px; text-align: left;">Date</th>
+                        <th style="padding: 15px; text-align: left;">Payment ID</th>
+                        <th style="padding: 15px; text-align: center;">Plan</th>
+                        <th style="padding: 15px; text-align: center;">Users</th>
+                        <th style="padding: 15px; text-align: right;">Amount</th>
+                        <th style="padding: 15px; text-align: center;">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="transactionTableBody">
+                    <!-- Populated by JS -->
+                </tbody>
+            </table>
+        </div>
+        <p id="noTransMsg" style="display: none; color: var(--text-muted); margin-top: 10px; text-align: center;">No
+            transactions found.</p>
+    </div>
+    </div>
+
+
+
+
+
+
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+
+    <script>
+        // Initialize DataTable
+        // const API_BASE_URL = 'https://webapi.7hrms.in/api';
+        const API_BASE_URL = 'http://localhost:3001/api';
+
+        $(document).ready(function () {
+            // Mobile Nav Logic or other initializations can go here if needed
+            fetch(`${API_BASE_URL}/admins`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.data) {
+                        const datalist = document.getElementById('adminNumbers');
+                        data.data.forEach(admin => {
+                            if (admin.phone) {
+                                const option = document.createElement('option');
+                                option.value = admin.phone;
+                                option.textContent = `${admin.fullName} (${admin.companyName})`;
+                                datalist.appendChild(option);
+                            }
+                        });
+
+
+                    }
+                })
+                .catch(error => console.error('Error fetching admin numbers:', error));
+        });
+
+        function selectAdmin(phone) {
+            document.getElementById('empNumber').value = phone;
+            lookupEmployee();
+            // Scroll to lookup card
+            document.querySelector('.lookup-card').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Mobile Nav Logic
+        function toggleMobileNav() {
+            const nav = document.getElementById('mobile-nav');
+            nav.classList.toggle('active');
+        }
+        function formatDate(dateString) {
+            if (!dateString || dateString === 'N/A') return 'N/A';
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString; // Return original if invalid
+            return date.toLocaleDateString('en-GB', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
+            });
+        }
+
+        function calculateAmount(empCount) {
+            let emp = parseInt(empCount);
+            if (isNaN(emp) || emp < 0) emp = 0;
+
+            let amount = 0;
+            let plan = "Starter";
+            let breakdown = "";
+
+            if (emp < 25) {
+                // Plan 1: 10 to 24 (Base 3000 for 10)
+                let base_price = 3000;
+                let base_emp = 10;
+                let extra_cost = 20;
+                plan = "Starter";
+
+                if (emp <= base_emp) {
+                    amount = base_price;
+                    breakdown = `Base Plan (${base_emp} Users): ₹${base_price}`;
+                } else {
+                    let extra = emp - base_emp;
+                    let extra_amt = extra * extra_cost;
+                    amount = base_price + extra_amt;
+                    breakdown = `Base (${base_emp} Users): ₹${base_price} + Extra (${extra} x ₹${extra_cost}): ₹${extra_amt}`;
+                }
+            } else if (emp < 50) {
+                // Plan 2: 25 to 49 (Base 7000 for 25)
+                let base_price = 7000;
+                let base_emp = 25;
+                let extra_cost = 20;
+                plan = "Growth";
+
+                let extra = emp - base_emp;
+                let extra_amt = extra * extra_cost;
+                amount = base_price + extra_amt;
+                breakdown = `Base (${base_emp} Users): ₹${base_price} + Extra (${extra} x ₹${extra_cost}): ₹${extra_amt}`;
+            } else if (emp < 100) {
+                // Plan 3: 50 to 99 (Base 12000 for 50)
+                let base_price = 12000;
+                let base_emp = 50;
+                let extra_cost = 20;
+                plan = "Business";
+
+                let extra = emp - base_emp;
+                let extra_amt = extra * extra_cost;
+                amount = base_price + extra_amt;
+                breakdown = `Base (${base_emp} Users): ₹${base_price} + Extra (${extra} x ₹${extra_cost}): ₹${extra_amt}`;
+            } else {
+                // Plan 4: Unlimited (100+)
+                amount = 35000;
+                plan = "Enterprise";
+                breakdown = "Unlimited Users Fixed Price";
+            }
+
+            // Start GST Calculation
+            let gst_rate = 0.18;
+            let gst_amount = amount * gst_rate;
+            let total_amount = amount + gst_amount;
+
+            // Update UI
+            document.getElementById('resPlan').textContent = plan;
+
+            // Note: resAmountInput is used for Razorpay, so it should store the Total Amount
+            // But we should probably show the breakdown neatly.
+            // Let's keep resAmountInput as the 'Total Payable Amount'
+            document.getElementById('resAmountInput').value = total_amount.toFixed(2);
+
+            // Detailed breakdown string
+            let breakdownText = breakdown;
+            if (empCount >= 0) {
+                breakdownText += `\nBase: ₹${amount} + GST (18%): ₹${gst_amount.toFixed(2)}`;
+            }
+            document.getElementById('resBreakdown').textContent = breakdownText;
+            document.getElementById('resBreakdown').style.whiteSpace = "pre-line"; // Allow new lines
+        }
+
+        function lookupEmployee() {
+            const num = document.getElementById('empNumber').value;
+            const panel = document.getElementById('resultPanel');
+            const success = document.getElementById('successCard');
+            const error = document.getElementById('errorCard');
+
+            if (num.length < 10) {
+                alert("Please enter a valid 10-digit number!");
+                return;
+            }
+
+            // Show loading or just panel
+            panel.style.display = 'block';
+            success.style.display = 'none';
+            error.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('mobile_number', num);
+
+            fetch(`${API_BASE_URL}/validate`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ mobile_number: num })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const info = data.data;
+                        document.getElementById('resSno').textContent = info._id || info.sno; // Use sno or _id
+                        document.getElementById('resComp').textContent = info.company_name;
+                        document.getElementById('resMobile').textContent = info.mobile_number;
+                        document.getElementById('resEmail').textContent = info.email;
+
+                        // Populate editable input and initialize calculation
+                        const empInput = document.getElementById('resEmpCount');
+                        empInput.value = info.num_employees || 0;
+                        calculateAmount(info.num_employees || 0); // Initial calculation based on fetched data
+
+                        document.getElementById('resNextDate').textContent = formatDate(info.next_subscription_date);
+                        document.getElementById('resLastDate').textContent = formatDate(info.last_payment_date);
+                        document.getElementById('resStatus').textContent = info.status;
+
+                        const statusBadge = document.getElementById('resStatusBadge');
+                        statusBadge.textContent = info.status.toUpperCase();
+                        if (info.status.toLowerCase() === 'active') {
+                            statusBadge.className = 'status-badge status-active';
+                        } else {
+                            statusBadge.className = 'status-badge status-error';
+                        }
+
+                        success.style.display = 'block';
+
+                        // Fetch Transaction History
+                        // Use validated companyId from backend if available, otherwise fallback
+                        fetchTransactions(info.companyId || info.sno);
+
+                    } else {
+                        error.style.display = 'block';
+                        document.getElementById('transactionHistoryPanel').style.display = 'none';
+                    }
+                })
+                .catch(err => {
+                    console.error('Error:', err);
+                    alert('An error occurred while validating.');
+                });
+        }
+
+        function startPayment() {
+            const amount = document.getElementById('resAmountInput').value;
+            // We send sno (ObjectId) or companyId, backend validates by mobile anyway
+            const company_sno = document.getElementById('resSno').textContent;
+            const mobile = document.getElementById('resMobile').textContent;
+            const email = document.getElementById('resEmail').textContent;
+            const company_name = document.getElementById('resComp').textContent;
+            const plan_type = document.getElementById('resPlan').textContent;
+            const num_employees = document.getElementById('resEmpCount').value;
+
+            if (!amount || amount <= 0) {
+                alert("Invalid Amount");
+                return;
+            }
+
+            var options = {
+                "key": "rzp_test_SCrehgmKBx9Y4H", // Enter the Key ID generated from the Dashboard
+                "amount": amount * 100, // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
+                "currency": "INR",
+                "name": "7 DREAMZ HRMS",
+                "description": "Subscription Recharge - " + plan_type,
+                "image": "assets/box.png",
+                "handler": function (response) {
+                    // Payment Success - Send to Backend
+                    const formData = new FormData();
+                    formData.append('payment_id', response.razorpay_payment_id);
+                    formData.append('company_sno', company_sno);
+                    formData.append('amount', amount);
+                    formData.append('plan_type', plan_type);
+                    formData.append('num_employees', num_employees);
+                    formData.append('company_name', company_name);
+                    formData.append('mobile', mobile);
+                    formData.append('email', email);
+
+                    // Fire and forget (almost) - for immediate redirect
+                    // Using 'keepalive' to ensure browser attempts to finish request even if we navigate
+                    fetch(`${API_BASE_URL}/payment`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            payment_id: response.razorpay_payment_id,
+                            company_sno: company_sno,
+                            amount: amount,
+                            plan_type: plan_type,
+                            num_employees: num_employees,
+                            company_name: company_name,
+                            mobile: mobile,
+                            email: email
+                        }),
+                        keepalive: true
+                    });
+
+                    // Calculate next year date locally for instant feedback
+                    const date = new Date();
+                    date.setFullYear(date.getFullYear() + 1);
+                    const nextDateStr = date.toISOString();
+
+                    // Redirect IMMEDIATELY
+                    window.location.href = `payment_success.html?payment_id=${response.razorpay_payment_id}&next_date=${nextDateStr}`;
+                },
+                "prefill": {
+                    "name": company_name,
+                    "email": email,
+                    "contact": mobile
+                },
+                "theme": {
+                    "color": "#e63946"
+                }
+
+            };
+            var rzp1 = new Razorpay(options);
+            rzp1.open();
+            // e.preventDefault();
+        }
+
+        function resetLookup() {
+            document.getElementById('resultPanel').style.display = 'none';
+            document.getElementById('transactionHistoryPanel').style.display = 'none';
+            document.getElementById('empNumber').value = '';
+        }
+
+        function fetchTransactions(companyId) {
+            const tableBody = document.getElementById('transactionTableBody');
+            const panel = document.getElementById('transactionHistoryPanel');
+            const noMsg = document.getElementById('noTransMsg');
+
+            tableBody.innerHTML = ''; // Clear previous
+            noMsg.style.display = 'none';
+
+            fetch(`${API_BASE_URL}/transactions?company_id=${companyId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.data.length > 0) {
+                        panel.style.display = 'block';
+                        data.data.forEach(txn => {
+                            const tr = document.createElement('tr');
+                            tr.style.borderBottom = '1px solid var(--border)';
+
+                            // Status color
+                            let statusColor = '#2ecc71'; // Green for success
+                            if (txn.status.toLowerCase() !== 'success') statusColor = 'var(--red)';
+
+                            tr.innerHTML = `
+                                <td style="padding: 15px;">${txn.date}</td>
+                                <td style="padding: 15px; font-family: monospace;">${txn.payment_id}</td>
+                                <td style="padding: 15px; text-align: center;">${txn.plan_type}</td>
+                                <td style="padding: 15px; text-align: center;">${txn.num_employees}</td>
+                                <td style="padding: 15px; text-align: right; font-weight: bold;">₹${txn.amount}</td>
+                                <td style="padding: 15px; text-align: center;">
+                                    <span style="color: ${statusColor}; font-weight: bold; font-size: 0.8rem; border: 1px solid ${statusColor}; padding: 2px 8px; border-radius: 4px;">
+                                        ${txn.status}
+                                    </span>
+                                </td>
+                            `;
+                            tableBody.appendChild(tr);
+                        });
+                    } else {
+                        panel.style.display = 'block'; // Show panel but say no transactions if preferred, or hide it.
+                        noMsg.style.display = 'block';
+                    }
+                })
+                .catch(err => console.error("Error fetching transactions:", err));
+        }
+
+    </script>
+</body>
+
+</html>

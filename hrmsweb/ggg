@@ -1,0 +1,23 @@
+<nav>
+            <ul id="desktop-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="about.html">About</a></li>
+                <li><a href="free_appointment.html">Free Appointment</a></li>
+                <li><a href="help.html">Help</a></li>
+            </ul>
+        </nav>
+        <a href="#" class="btn-nav">Login</a>
+        <div class="hamburger" onclick="toggleMobileNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </header>
+
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="close-menu" onclick="toggleMenu()">&times;</div>
+        <a href="index.html" onclick="toggleMenu()">Home</a>
+        <a href="about.html" onclick="toggleMenu()">About</a>
+        <a href="free_appointment.html" onclick="toggleMenu()">Free Appointment</a>
+        <a href="help.html" onclick="toggleMenu()">Help</a>
+    </div>
